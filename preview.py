@@ -43,7 +43,7 @@ if __name__ == '__main__':
         else:
             ret,frame = miCamara.read() 
         if args.showImage:
-            cv2.imshow('Window',frame)
+            cv2.imshow('Window',cv2.resize(frame,(320,240)))
         ch = cv2.waitKey(1) & 0xFF
         if ch == ord('q'):
             break
