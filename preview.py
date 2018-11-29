@@ -26,6 +26,7 @@ if __name__ == '__main__':
             miCamara  = VideoStream(usePiCamera=True, resolution=(320,240)).start()
             time.sleep(2.0)
             picam = True
+            print('Success accessing picamera')
         except Exception as e:
             print('Could not access any picamera, error: '+str(e))
             for sourceTrial in range(2):
