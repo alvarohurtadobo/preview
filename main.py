@@ -30,23 +30,24 @@ if __name__ == '__main__':
         autokill = args.autokill
         print('Set autokill to {} seconds'.format(autokill))
     if args.ip_camera:
-        miCamara = PlayStream(ip_address_with_port = args.ip_camera)
+        miCamara = PlayStream(ip_address_with_port = args.ip_camera,resolution=(args.width,args.height),historial_len=30)
     else:
-        miCamara = PlayStream(input_video = args.video_file,resolution=(args.width,args.height))
+        miCamara = PlayStream(input_video = args.video_file,resolution=(args.width,args.height),historial_len=30)
     server = ServerController()
 
     initialTime = time.time()
     while True:
         ret,frame = miCamara.read() 
-        print(frame.shape)
         if args.showImage:
             cv2.imshow('Window',frame)
         else:
             server.sendImageIfAllowed(frame)
         ch = cv2.waitKey(1) & 0xFF
         frame_number+=1
-        if frame_number % 100:
+        if frame_number % 300 == 60:
+            print(frame.shape)
             print(miCamara.getFPS())
+            PlayStream.exportHistorialAsImages('/home/alvaro/images')
         if autokill > 0:
             if time.time() - initialTime > autokill:
                 print('Automatic program exit')

@@ -5,8 +5,11 @@ Simple class for using multiple inputs and multiple sources of videos with openc
 import os
 import cv2
 import time
+from datetime import datetime
 from imutils.video import FPS
 from imutils.video import VideoStream
+
+#from ipcamera import IPCamera
 
 class PlayStream():
     """
@@ -51,8 +54,8 @@ class PlayStream():
         self.emulate_real_time = real_time
 
         # IP camera settings
-        self.ip_format = ['rtsp://admin:DeMS2018@','/Streaming/channels/2/preview'] # rtsp://admin:DeMS2018@192.168.1.20:554/Streaming/channels/2/preview
-        self.ip_address_with_port = ip_address_with_port    # 192.168.1.20:554
+        self.ip_format = ['rtsp://admin:DeMS2018@','/Streaming/channels/1/preview']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1/preview
+        self.ip_address_with_port = ip_address_with_port                        # 192.168.1.20:554
 
         if ip_address_with_port:
             self._video_souce = "IPcamera"
@@ -76,8 +79,8 @@ class PlayStream():
             except Exception as e:
                 print('Could not access any picamera, error: '+str(e))
         elif self._video_souce == "IPcamera":
-            print('Access: '+ self.full_ip_address())
             self._capture = cv2.VideoCapture(self.full_ip_address())
+            #self._capture = IPCamera(self.full_ip_address())
         elif self._video_souce == "file":
             # In case of a file we try all possible locations for the file
             if os.path.isfile(input_video):
@@ -109,7 +112,7 @@ class PlayStream():
             if self._capture:
                 # In case of a usb camera we set the parameters
                 self._capture.set(cv2.CAP_PROP_FPS, 30)
-                if resolution:
+                if self.resolution:
                     self._capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
                     self._capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         time.sleep(1.0)
@@ -128,11 +131,18 @@ class PlayStream():
         self._video_paths.append(new_path_to_video)
         return len(self._video_paths)
 
-    def getPeriod(self):
-        return sum(PlayStream.list_period)/len(PlayStream.list_period)
-
-    def getFPS(self):
-        return 1/self.getPeriod()
+    @staticmethod
+    def exportHistorialAsImages(pathToSave):
+        contador = 0
+        inicio = min(PlayStream.historial)
+        final = max(PlayStream.historial)
+        for indice in range(inicio,final):
+            imagen = PlayStream.historial[indice]
+            file_name = '/{date}_{counter}.jpg'.format( date = datetime.now().strftime('%Y%m%d_%H%M%S'),
+                                                        counter = contador)
+            print('saving: '+pathToSave+file_name)
+            cv2.imwrite(pathToSave+file_name,imagen)
+            contador += 1
 
     def read(self):
         """
@@ -152,6 +162,7 @@ class PlayStream():
             frames_retraso = int((time.time() - self._init_time)*self.fps)
             if frames_retraso == 0:
                 frames_retraso = 1
+            
             for index in range(frames_retraso):
                 ret, frame = self._capture.read()
                 if not self.emulate_real_time:
@@ -174,6 +185,12 @@ class PlayStream():
         if len(PlayStream.list_period)>10:
             PlayStream.list_period.pop(0)
         return ret, frame
+
+    def getPeriod(self):
+        return sum(PlayStream.list_period)/len(PlayStream.list_period)
+
+    def getFPS(self):
+        return 1/self.getPeriod()
 
     def release(self):
         if not self._video_souce == "picamera":
