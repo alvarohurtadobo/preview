@@ -47,7 +47,7 @@ if __name__ == '__main__':
         if frame_number % 300 == 60:
             print(frame.shape)
             print(miCamara.getFPS())
-            PlayStream.exportHistorialAsImages('/home/alvaro/images')
+            #PlayStream.exportHistorialAsImages('/home/alvaro/images')
         if autokill > 0:
             if time.time() - initialTime > autokill:
                 print('Automatic program exit')
