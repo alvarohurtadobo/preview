@@ -54,7 +54,7 @@ class PlayStream():
         self.emulate_real_time = real_time
 
         # IP camera settings
-        self.ip_format = ['rtsp://admin:DeMS2018@','/Streaming/channels/1/preview']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1/preview
+        self.ip_format = ['rtsp://admin:DeMS2018@','/Streaming/channels/1/preview']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
         self.ip_address_with_port = ip_address_with_port                        # 192.168.1.20:554
 
         if ip_address_with_port:
