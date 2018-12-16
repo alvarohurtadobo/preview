@@ -87,7 +87,7 @@ class PlayStream():
             except Exception as e:
                 print('Could not access any picamera, error: '+str(e))
             try:
-                self._capture.stream.camera.brightness = self.brightness
+                self._capture.camera.brightness = self.brightness
             except Exception as e:
                 print('<<< COULD NOT SET BRIGHTNESS TO {}, CHECK THE PATH >>>'.format(self.brightness))
                 print(str(e))
