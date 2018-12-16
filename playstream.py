@@ -4,6 +4,7 @@ Simple class for using multiple inputs and multiple sources of videos with openc
 
 import os
 import cv2
+import json
 import time
 from datetime import datetime
 from imutils.video import FPS
@@ -33,7 +34,8 @@ class PlayStream():
         # General settings
         self.fps = 30
         self._init_time = time.time()
-        homeRoute = os.getenv('HOME')
+        self.last_time = self._init_time 
+        self.homeRoute = os.getenv('HOME')
         self.new_time = time.time()
         self.old_time = self.new_time
         self.fake_gray_scale = fake_gray_scale
@@ -57,7 +59,7 @@ class PlayStream():
         self._video_souce = "picamera"                      # Can be "picamera", "usbcamera" or "file"
 
         # File settings:
-        self._video_paths = [homeRoute+'/trafficFlow/trialVideos/']
+        self._video_paths = [self.homeRoute+'/trafficFlow/trialVideos/']
         
         self.emulate_real_time = real_time
 
@@ -128,10 +130,19 @@ class PlayStream():
                     self._capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
                     self._capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         time.sleep(1.0)
+
+    def set_brightness(self,new_brightness):
+        self.brightness = new_brightness
+        self._capture.camera.brightness = self.brightness
+
+    def set_grayscale(self):
+        self.fake_gray_scale = True
+
+    def set_color(self):
+        self.fake_gray_scale = False
             
     def full_ip_address(self):
         return self.ip_format[0] + self.ip_address_with_port + self.ip_format[1]
-
 
     def set_address_format(self, beforeIP,afterIP):
         self.ip_format = [beforeIP,afterIP]
@@ -160,6 +171,21 @@ class PlayStream():
         """
         The most importan class tha unifies both ways of accessing the picamera and usb camera
         """
+        # We look for changes every 3 seconds:
+        if time.time() - self.last_time > 3:
+            self.last_time = time.time()
+            new_configs = {}
+            with open(self.homeRoute+'/configs/configs.json') as json_file: 
+                new_configs = json.load(json_file)
+                if new_configs['changed'] == True:
+                    self.set_brightness(int(new_configs['brightness']))
+                    if new_configs['gray']:
+                        self.set_grayscale()
+                    else:
+                        self.set_color()
+            new_configs['changed'] == False
+            with open('{home}/configs/configs.json'.format(home = self.homeRoute), 'w') as outfile:  
+                json.dump(new_configs, outfile)
         if self._video_souce == "picamera":
             frame = self._capture.read()
             if len(frame.shape)>=1:
