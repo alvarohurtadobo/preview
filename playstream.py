@@ -19,7 +19,13 @@ class PlayStream():
     frame_number = 0
     list_period = []
     
-    def __init__(self,input_video = None,ip_address_with_port=None,resolution = (320,240),real_time=False,historial_len = None):
+    def __init__(self,  input_video = None, 
+                        ip_address_with_port = None,
+                        resolution = (320,240),
+                        fake_gray_scale = False,
+                        brightness = 50,
+                        real_time = False,
+                        historial_len = None):
         """
         The class is started with a "input_video" in case of a file and a USB camera or None with picamera
         The default resolution is 320x240 and can be changed as resolution = (w,h)
@@ -30,6 +36,8 @@ class PlayStream():
         homeRoute = os.getenv('HOME')
         self.new_time = time.time()
         self.old_time = self.new_time
+        self.fake_gray_scale = fake_gray_scale
+        self.brightness = brightness
 
         self.historial_len = None
         try:
@@ -78,6 +86,10 @@ class PlayStream():
                     self._capture  = VideoStream(usePiCamera=True).start()
             except Exception as e:
                 print('Could not access any picamera, error: '+str(e))
+            try:
+                self._capture.stream.camera.brightness = self.brightness
+            except:
+                print('<<< COULD NOT SET BRIGHTNESS, CHECK THE PATH >>>')
         elif self._video_souce == "IPcamera":
             self._capture = cv2.VideoCapture(self.full_ip_address())
             #self._capture = IPCamera(self.full_ip_address())
@@ -178,12 +190,18 @@ class PlayStream():
                 del PlayStream.historial[min(PlayStream.historial)]
         if not ret:
             print('Could not get any frame')
+        
         # We calculate the fps:
         self.new_time = time.time()
         PlayStream.list_period.append(self.new_time-self.old_time)
         self.old_time = self.new_time
         if len(PlayStream.list_period)>10:
             PlayStream.list_period.pop(0)
+
+        # If we are set to grayscale  we set the property
+        if self.fake_gray_scale:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
         return ret, frame
 
     def getPeriod(self):

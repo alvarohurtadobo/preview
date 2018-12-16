@@ -19,6 +19,8 @@ parser.add_argument("-i", "--video_file", type=str, help="Specify optional video
 parser.add_argument("-W", "--width", type=int, help="Specify optional video width", default=320)
 parser.add_argument("-H", "--height", type=int, help="Specify optional video height", default=240)
 parser.add_argument("-p", "--ip_camera", type=str, help="Specify optional ip camera file", default=None)
+parser.add_argument("-g", "--grayscale", type=bool, help="Set grayscale mode", default=False)
+parser.add_argument("-b", "--brightness", type=int, help="Specify optional brightness for the camera", default=50)
 #parser.add_argument('video_file', metavar='video_file', type=str, nargs='?', help='specify optional video file')
 args = parser.parse_args()
 
@@ -30,9 +32,18 @@ if __name__ == '__main__':
         autokill = args.autokill
         print('Set autokill to {} seconds'.format(autokill))
     if args.ip_camera:
-        miCamara = PlayStream(ip_address_with_port = args.ip_camera,resolution=(args.width,args.height),historial_len=30)
+        miCamara = PlayStream(  ip_address_with_port = args.ip_camera,
+                                resolution = (args.width,args.height),
+                                historial_len = 30,
+                                brightness = args.brightness,
+                                fake_gray_scale = args.grayscale)
     else:
-        miCamara = PlayStream(input_video = args.video_file,resolution=(args.width,args.height),historial_len=30)
+        miCamara = PlayStream(  input_video = args.video_file,
+                                resolution = (args.width,args.height),
+                                historial_len = 30,
+                                brightness = args.brightness,
+                                fake_gray_scale = args.grayscale)
+                                
     server = ServerController()
 
     initialTime = time.time()
