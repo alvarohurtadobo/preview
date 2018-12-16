@@ -33,24 +33,31 @@ class PlayStream():
         """
         # General settings
         self.fps = 30
+        self.home_route = os.getenv('HOME')
+
+        # Timing variables settings
         self._init_time = time.time()
         self.last_time = self._init_time 
-        self.homeRoute = os.getenv('HOME')
-        self.new_time = time.time()
-        self.old_time = self.new_time
+        self.new_time_for_fps = time.time()
+        self.old_time = self.new_time_for_fps
+        self.emulate_real_time = real_time
+
+        # Config settings
         self.fake_gray_scale = fake_gray_scale
         self.brightness = brightness
+        self.width = None
+        self.height = None
 
         self.historial_len = None
         try:
             if historial_len > 0:
                 self.historial_len = historial_len
         except:
-            print('Not integer returned')
+            print('Not integer provided for historial len')
 
+        # Main variables
         self._capture = None
-        self.width = None
-        self.height = None
+        
         if resolution:
             self.resolution = resolution
             self.width = resolution[0]
@@ -58,10 +65,8 @@ class PlayStream():
         
         self._video_souce = "picamera"                      # Can be "picamera", "usbcamera" or "file"
 
-        # File settings:
-        self._video_paths = [self.homeRoute+'/trafficFlow/trialVideos/']
-        
-        self.emulate_real_time = real_time
+        # File paths:
+        self._video_paths = [self.home_route+'/trafficFlow/trialVideos/']
 
         # IP camera settings
         self.ip_format = ['rtsp://admin:DeMS2018@','/Streaming/channels/1/preview']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
@@ -132,26 +137,29 @@ class PlayStream():
         time.sleep(1.0)
 
     def set_brightness(self,new_brightness):
+        # Set the brightness only for the pi camera
         self.brightness = new_brightness
         if self._video_souce == "picamera":
             self._capture.camera.brightness = self.brightness
 
     def set_grayscale(self):
+        # Set grayscale to true, by now only averaging the channels
         self.fake_gray_scale = True
 
     def set_color(self):
+        # Set color to RBG
         self.fake_gray_scale = False
             
     def full_ip_address(self):
+        # Create IP address
         return self.ip_format[0] + self.ip_address_with_port + self.ip_format[1]
 
     def set_address_format(self, beforeIP,afterIP):
+        # Change IP Address
         self.ip_format = [beforeIP,afterIP]
 
     def addVideoRoutes(self,new_path_to_video):
-        """
-        In case a custom route to the videos is added for the search job
-        """
+        # In case a custom route to the videos is added for the search job
         self._video_paths.append(new_path_to_video)
         return len(self._video_paths)
 
@@ -176,7 +184,7 @@ class PlayStream():
         if time.time() - self.last_time > 3:
             self.last_time = time.time()
             new_configs = {}
-            with open('{home}/configs/configs.json'.format(home = self.homeRoute)) as json_file:
+            with open('{home}/configs/configs.json'.format(home = self.home_route)) as json_file:
                 new_configs = json.load(json_file)
                 if new_configs['changed'] == True:
                     self.set_brightness(int(new_configs['brightness']))
@@ -186,8 +194,9 @@ class PlayStream():
                         self.set_color()
             new_configs['changed'] = False
             print(new_configs)
-            with open('{home}/configs/configs.json'.format(home = self.homeRoute), 'w') as json_file:  
+            with open('{home}/configs/configs.json'.format(home = self.home_route), 'w') as json_file:  
                 json.dump(new_configs, json_file)
+                
         if self._video_souce == "picamera":
             frame = self._capture.read()
             if len(frame.shape)>=1:
@@ -220,9 +229,9 @@ class PlayStream():
             print('Could not get any frame')
         
         # We calculate the fps:
-        self.new_time = time.time()
-        PlayStream.list_period.append(self.new_time-self.old_time)
-        self.old_time = self.new_time
+        self.new_time_for_fps = time.time()
+        PlayStream.list_period.append(self.new_time_for_fps-self.old_time)
+        self.old_time = self.new_time_for_fps
         if len(PlayStream.list_period)>10:
             PlayStream.list_period.pop(0)
 
