@@ -88,9 +88,8 @@ class PlayStream():
                 print('Could not access any picamera, error: '+str(e))
             try:
                 self._capture.camera.brightness = self.brightness
-            except Exception as e:
-                print('<<< COULD NOT SET BRIGHTNESS TO {}, CHECK THE PATH >>>'.format(self.brightness))
-                print(str(e))
+            except:
+                print('Could not set brightness to {}'.format(self.brightness))
         elif self._video_souce == "IPcamera":
             self._capture = cv2.VideoCapture(self.full_ip_address())
             #self._capture = IPCamera(self.full_ip_address())
