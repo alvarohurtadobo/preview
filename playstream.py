@@ -133,7 +133,8 @@ class PlayStream():
 
     def set_brightness(self,new_brightness):
         self.brightness = new_brightness
-        self._capture.camera.brightness = self.brightness
+        if self._video_souce == "picamera":
+            self._capture.camera.brightness = self.brightness
 
     def set_grayscale(self):
         self.fake_gray_scale = True
@@ -175,7 +176,7 @@ class PlayStream():
         if time.time() - self.last_time > 3:
             self.last_time = time.time()
             new_configs = {}
-            with open(self.homeRoute+'/configs/configs.json') as json_file: 
+            with open('{home}/configs/configs.json'.format(home = self.homeRoute)) as json_file:
                 new_configs = json.load(json_file)
                 if new_configs['changed'] == True:
                     self.set_brightness(int(new_configs['brightness']))
@@ -183,9 +184,10 @@ class PlayStream():
                         self.set_grayscale()
                     else:
                         self.set_color()
-            new_configs['changed'] == False
-            with open('{home}/configs/configs.json'.format(home = self.homeRoute), 'w') as outfile:  
-                json.dump(new_configs, outfile)
+            new_configs['changed'] = False
+            print(new_configs)
+            with open('{home}/configs/configs.json'.format(home = self.homeRoute), 'w') as json_file:  
+                json.dump(new_configs, json_file)
         if self._video_souce == "picamera":
             frame = self._capture.read()
             if len(frame.shape)>=1:
