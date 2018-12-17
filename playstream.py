@@ -181,25 +181,21 @@ class PlayStream():
         The most importan class tha unifies both ways of accessing the picamera and usb camera
         """
         # We look for changes every 3 seconds:
-        if time.time() - self.last_time > 4:
+        if time.time() - self.last_time > 3:
             self.last_time = time.time()
             new_configs = {}
-            expected_configs_file_name = '{home}/configs/configs.json'.format(home = self.home_route)
-            
-            if os.path.isfile(expected_configs_file_name):
-                with open(expected_configs_file_name) as json_file:
-                    new_configs = json.load(json_file)
-                    if new_configs['changed'] == True:
-                        self.set_brightness(int(new_configs['brightness']))
-                        if new_configs['gray']:
-                            self.set_grayscale()
-                        else:
-                            self.set_color()
-                new_configs['changed'] = False
-                new_configs_file_name = expected_configs_file_name.split('.')[0]
-                with open(expected_configs_file_name, 'w') as json_file:  
-                    json.dump(new_configs, json_file)
-                os.rename(expected_configs_file_name,new_configs_file_name)
+            with open('{home}/configs/configs.json'.format(home = self.home_route)) as json_file:
+                new_configs = json.load(json_file)
+                if new_configs['changed'] == True:
+                    self.set_brightness(int(new_configs['brightness']))
+                    if new_configs['gray']:
+                        self.set_grayscale()
+                    else:
+                        self.set_color()
+            new_configs['changed'] = False
+            print(new_configs)
+            with open('{home}/configs/configs.json'.format(home = self.home_route), 'w') as json_file:  
+                json.dump(new_configs, json_file)
                 
         if self._video_souce == "picamera":
             frame = self._capture.read()
@@ -243,6 +239,8 @@ class PlayStream():
         if self.fake_gray_scale:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+
+        frame.setflags(write=True)
         return ret, frame
 
     def getPeriod(self):
