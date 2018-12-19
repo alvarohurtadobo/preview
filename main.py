@@ -13,15 +13,15 @@ from servercontroller import ServerController
 from playstream import PlayStream
 
 parser = argparse.ArgumentParser(description='Perform next options')
-parser.add_argument("-k", "--autokill", type=int, help="Auto kill parameter", default=0)
-parser.add_argument("-s", "--showImage", type=bool, help="Show image in screen rather than server", default=False)
-parser.add_argument("-i", "--video_file", type=str, help="Specify optional video file", default=None)
-parser.add_argument("-W", "--width", type=int, help="Specify optional video width", default=320)
-parser.add_argument("-H", "--height", type=int, help="Specify optional video height", default=240)
-parser.add_argument("-p", "--ip_camera", type=str, help="Specify optional ip camera file", default=None)
-parser.add_argument("-g", "--grayscale", type=bool, help="Set grayscale mode", default=False)
-parser.add_argument("-b", "--brightness", type=int, help="Specify optional brightness for the camera", default=50)
-#parser.add_argument('video_file', metavar='video_file', type=str, nargs='?', help='specify optional video file')
+parser.add_argument("-k", "--autokill",     type = int, default = 0,      help = "Self kill parameter")
+parser.add_argument("-s", "--show_image",   type = bool, default = False, help = "Show image in screen rather than server")
+parser.add_argument("-i", "--video_file",   type = str, default = None,   help = "Specify optional video file")
+parser.add_argument("-W", "--width",        type = int, default = 320,    help = "Specify optional video width")
+parser.add_argument("-H", "--height",       type = int, default = 240,    help = "Specify optional video height")
+parser.add_argument("-p", "--ip_camera",    type = str, default = None,   help = "Specify optional ip camera file")
+parser.add_argument("-g", "--grayscale",    type = bool, default = False, help = "Set grayscale mode")
+parser.add_argument("-b", "--brightness",   type = int, default = 50,     help = "Specify optional brightness for the camera")
+parser.add_argument("-t", "--threaded",     type = bool, default = False,  help = "Optional enable threaded module")
 args = parser.parse_args()
 
 frame_number = 0
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     initialTime = time.time()
     while True:
         ret,frame = miCamara.read() 
-        if args.showImage:
+        if args.show_image:
             cv2.imshow('Window',frame)
         else:
             server.sendImageIfAllowed(frame)

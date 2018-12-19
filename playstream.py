@@ -69,7 +69,9 @@ class PlayStream():
         self._video_paths = [self.home_route+'/trafficFlow/trialVideos/']
 
         # IP camera settings
-        self.ip_format = ['rtsp://admin:DeMS2018@','/Streaming/channels/1/preview']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
+        #self.ip_format = ['rtsp://admin:DeMS2018@','/Streaming/channels/1/preview']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
+        self.ip_format = ['rtsp://pi:dems@','/']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
+        
         self.ip_address_with_port = ip_address_with_port                        # 192.168.1.20:554
 
         if ip_address_with_port:
