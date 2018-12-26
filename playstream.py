@@ -215,7 +215,7 @@ class PlayStream():
         if ret and self.historial_len:
             PlayStream.historial[PlayStream.frame_number] = frame.copy()
             PlayStream.frame_number += 1
-            if len(PlayStream.historial) > self.historial_len*self.fps:
+            if len(PlayStream.historial) > self.historial_len:
                 del PlayStream.historial[min(PlayStream.historial)]
         if not ret:
             print('Could not get any frame')

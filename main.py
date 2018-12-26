@@ -26,7 +26,7 @@ parser.add_argument("-b", "--brightness",   type = int, default = 50,     help =
 parser.add_argument("-t", "--period",       type = int, default = 0,      help = "Optional period for saving images")
 parser.add_argument("-f", "--fps",          type = int, default = 6,      help = "Optional FPS")
 parser.add_argument("-n", "--next",         type = int, default = 1,      help = "Next images backup on video")
-parser.add_argument("-l", "--lenght",       type = int, default = 10,     help = "Lenght for historial in seconds")
+parser.add_argument("-l", "--length",       type = int, default = 10,     help = "Lenght for historial in seconds")
 #parser.add_argument("-r", "--real",         type = bool, default = False, help = "Emulate real time, for saved video only")
 args = parser.parse_args()
 
@@ -40,14 +40,14 @@ if __name__ == '__main__':
     if args.ip_camera:
         miCamara = PlayStream(  ip_address_with_port = args.ip_camera,
                                 resolution = (1920,1080),
-                                historial_len = args.lenght,
+                                historial_len = args.length,
                                 brightness = args.brightness,
                                 fake_gray_scale = args.grayscale,
                                 fps = args.fps)
     else:
         miCamara = PlayStream(  input_video = args.video_file,
                                 resolution = (args.width,args.height),
-                                historial_len = args.lenght,
+                                historial_len = args.length,
                                 brightness = args.brightness,
                                 fake_gray_scale = args.grayscale,
                                 fps = args.fps)
@@ -68,26 +68,30 @@ if __name__ == '__main__':
     print('Started program at {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
 
     while True:
-        ret,frame = miCamara.read() 
-        if not ret:
-            print('Ret False, could not get any frame at: {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
-        if args.show_image:
-            cv2.imshow('Window',frame)
-        else:
-            server.sendImageIfAllowed(frame)
-        ch = cv2.waitKey(1) & 0xFF
-        frame_number += 1
+        try:
+            ret,frame = miCamara.read() 
+            if not ret:
+                print('Ret False, could not get any frame at: {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
+            if args.show_image:
+                cv2.imshow('Window',frame)
+            else:
+                server.sendImageIfAllowed(frame)
+            ch = cv2.waitKey(1) & 0xFF
+            frame_number += 1
 
-        if  (time.time() - time_now > args.period) and (args.period > 0):
-            print('Saving files at frame {}, with shape {}, and at real FPS {} from requested FPS {}'.format(frame_number,frame.shape,miCamara.getFPS(),miCamara.fps))
-            miCamara.generateVideo(exportOutput)
-            if counter_for_images > 0:
-                PlayStream.exportHistorialAsImages(exportOutput)
-                counter_for_images -= 1
-            time_now = time.time()
-        if autokill > 0:
-            if time.time() - initialTime > autokill:
-                print('Automatic program exit')
+            if  (time.time() - time_now > args.period) and (args.period > 0):
+                print('Saving files at frame {}, with shape {}, and at real FPS {} from requested FPS {}'.format(frame_number,frame.shape,miCamara.getFPS(),miCamara.fps))
+                miCamara.generateVideo(exportOutput)
+                if counter_for_images > 0:
+                    PlayStream.exportHistorialAsImages(exportOutput)
+                    counter_for_images -= 1
+                time_now = time.time()
+            if autokill > 0:
+                if time.time() - initialTime > autokill:
+                    print('Automatic program exit')
+                    break
+            if ch == ord('q'):
                 break
-        if ch == ord('q'):
+        except Exception as e:
+            print('Exception {} at: {}. Leaving'.format(str(e),datetime.now().strftime('%Y%m%d_%H%M%S')))
             break
