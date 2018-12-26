@@ -7,6 +7,7 @@ import cv2
 import sys
 import time
 import argparse
+from datetime import datetime
 
 sys.path.append(os.getenv('HOME')+'/trafficFlow/flaskwebcontroller/')
 from servercontroller import ServerController
@@ -64,8 +65,12 @@ if __name__ == '__main__':
 
     counter_for_images = args.next
 
+    print('Started program at {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
+
     while True:
         ret,frame = miCamara.read() 
+        if not ret:
+            print('Ret False, could not get any frame at: {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
         if args.show_image:
             cv2.imshow('Window',frame)
         else:
