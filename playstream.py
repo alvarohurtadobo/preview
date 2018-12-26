@@ -19,6 +19,7 @@ class PlayStream():
     historial = {}
     frame_number = 0
     list_period = []
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
     
     def __init__(self,  input_video = None, 
                         ip_address_with_port = None,
@@ -26,13 +27,14 @@ class PlayStream():
                         fake_gray_scale = False,
                         brightness = 50,
                         real_time = False,
-                        historial_len = None):
+                        historial_len = 0,
+                        fps = 6):
         """
         The class is started with a "input_video" in case of a file and a USB camera or None with picamera
         The default resolution is 320x240 and can be changed as resolution = (w,h)
         """
         # General settings
-        self.fps = 30
+        self.fps = fps
         self.home_route = os.getenv('HOME')
 
         # Timing variables settings
@@ -48,12 +50,9 @@ class PlayStream():
         self.width = None
         self.height = None
 
-        self.historial_len = None
-        try:
-            if historial_len > 0:
-                self.historial_len = historial_len
-        except:
-            print('Not integer provided for historial len')
+        self.historial_len = historial_len*self.fps
+        if self.historial_len < 0:
+            self.historial_len = 0
 
         # Main variables
         self._capture = None
@@ -69,8 +68,8 @@ class PlayStream():
         self._video_paths = [self.home_route+'/trafficFlow/trialVideos/']
 
         # IP camera settings
-        #self.ip_format = ['rtsp://admin:DeMS2018@','/Streaming/channels/1/preview']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
-        self.ip_format = ['rtsp://pi:dems@','/']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
+        self.ip_format = ['rtsp://admin:DeMS2018@','/Streaming/channels/1/preview']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
+        #self.ip_format = ['rtsp://pi:dems@','/']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
         
         self.ip_address_with_port = ip_address_with_port                        # 192.168.1.20:554
 
@@ -165,19 +164,6 @@ class PlayStream():
         self._video_paths.append(new_path_to_video)
         return len(self._video_paths)
 
-    @staticmethod
-    def exportHistorialAsImages(pathToSave):
-        contador = 0
-        inicio = min(PlayStream.historial)
-        final = max(PlayStream.historial)
-        for indice in range(inicio,final):
-            imagen = PlayStream.historial[indice]
-            file_name = '/{date}_{counter}.jpg'.format( date = datetime.now().strftime('%Y%m%d_%H%M%S'),
-                                                        counter = contador)
-            print('saving: '+pathToSave+file_name)
-            cv2.imwrite(pathToSave+file_name,imagen)
-            contador += 1
-
     def read(self):
         """
         The most importan class tha unifies both ways of accessing the picamera and usb camera
@@ -229,7 +215,7 @@ class PlayStream():
         if ret and self.historial_len:
             PlayStream.historial[PlayStream.frame_number] = frame.copy()
             PlayStream.frame_number += 1
-            if len(PlayStream.historial) > self.historial_len:
+            if len(PlayStream.historial) > self.historial_len*self.fps:
                 del PlayStream.historial[min(PlayStream.historial)]
         if not ret:
             print('Could not get any frame')
@@ -258,3 +244,35 @@ class PlayStream():
     def release(self):
         if not self._video_souce == "picamera":
             self._capture.release()
+
+    def generateVideo(self,directory):
+        nombreInfraccion = datetime.now().strftime('%Y%m%d_%H%M%S')
+        print('Writing: ' + nombreInfraccion)
+        directorioActual = directory
+        current_video = directorioActual + '/' + nombreInfraccion + '.avi'
+
+        aEntregar = cv2.VideoWriter(current_video,PlayStream.fourcc, self.fps,self.resolution)
+
+        for index,frame in PlayStream.historial.items():
+            try:
+                aEntregar.write(frame)
+            except Exception as e:
+                print('Problem with frame {} because of {}'.format(index,e))
+        aEntregar.release()
+        #os.system('ffmpeg -i {} {}.mp4'.format(nombreVideo,nombreVideo[:-4]))
+        #os.system('rm {}'.format(nombreVideo))
+
+    @staticmethod
+    def exportHistorialAsImages(pathToSave):
+        contador = 0
+        inicio = min(PlayStream.historial)
+        final = max(PlayStream.historial)
+        subdir = pathToSave + '/' + datetime.now().strftime('%Y%m%d_%H%M%S')
+        print('Saving images in: ' + subdir)
+        if not os.path.exists(subdir):
+            os.makedirs(subdir)
+        for indice in range(inicio,final):
+            imagen = PlayStream.historial[indice]
+            file_name = '/{counter}.jpg'.format(counter = contador)
+            cv2.imwrite(subdir+file_name,imagen)
+            contador += 1
