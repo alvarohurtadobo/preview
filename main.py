@@ -25,7 +25,7 @@ parser.add_argument("-b", "--brightness",   type = int, default = 50,     help =
 #parser.add_argument("-t", "--threaded",     type = bool, default = False,  help = "Optional enable threaded module")
 parser.add_argument("-t", "--period",       type = int, default = 0,      help = "Optional period for saving images")
 parser.add_argument("-f", "--fps",          type = int, default = 6,      help = "Optional FPS")
-parser.add_argument("-n", "--next",         type = int, default = 1,      help = "Next images backup on video")
+parser.add_argument("-n", "--next",         type = int, default = 0,      help = "Next images backup on video")
 parser.add_argument("-l", "--length",       type = int, default = 10,     help = "Lenght for historial in seconds")
 #parser.add_argument("-r", "--real",         type = bool, default = False, help = "Emulate real time, for saved video only")
 args = parser.parse_args()
@@ -67,23 +67,26 @@ if __name__ == '__main__':
 
     print('Started program at {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
 
+    cv2.namedWindow('Preview', cv2.WND_PROP_FULLSCREEN)
+
     while True:
         try:
             ret,frame = miCamara.read() 
             if not ret:
                 print('Ret False, could not get any frame at: {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
             if args.show_image:
-                cv2.imshow('Window',frame)
+                cv2.imshow('Preview',frame)
             else:
                 server.sendImageIfAllowed(frame)
             ch = cv2.waitKey(1) & 0xFF
             frame_number += 1
 
             if  (time.time() - time_now > args.period) and (args.period > 0):
+                exportOutputName = exportOutput + '/' +datetime.now().strftime('%Y%m%d_%H%M%S')
                 print('Saving files at frame {}, with shape {}, and at real FPS {} from requested FPS {}'.format(frame_number,frame.shape,miCamara.getFPS(),miCamara.fps))
-                miCamara.generateVideo(exportOutput)
+                miCamara.generateVideo(exportOutputName)
                 if counter_for_images > 0:
-                    PlayStream.exportHistorialAsImages(exportOutput)
+                    miCamara.exportHistorialAsImages(exportOutputName)
                     counter_for_images -= 1
                 time_now = time.time()
             if autokill > 0:
@@ -92,6 +95,9 @@ if __name__ == '__main__':
                     break
             if ch == ord('q'):
                 break
+            if ch == ord('s'):
+                cv2.imwrite(exportOutput + '/' +datetime.now().strftime('%Y%m%d_%H%M%S')+'.png',frame)
+                
         except Exception as e:
             print('Exception {} at: {}. Leaving'.format(str(e),datetime.now().strftime('%Y%m%d_%H%M%S')))
             break

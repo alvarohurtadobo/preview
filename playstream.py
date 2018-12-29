@@ -6,7 +6,6 @@ import os
 import cv2
 import json
 import time
-from datetime import datetime
 from imutils.video import FPS
 from imutils.video import VideoStream
 
@@ -53,6 +52,8 @@ class PlayStream():
         self.historial_len = historial_len*self.fps
         if self.historial_len < 0:
             self.historial_len = 0
+
+        self.normalPeriod = True
 
         # Main variables
         self._capture = None
@@ -222,7 +223,11 @@ class PlayStream():
         
         # We calculate the fps:
         self.new_time_for_fps = time.time()
-        PlayStream.list_period.append(self.new_time_for_fps-self.old_time)
+        if self.normalPeriod:
+            # If we did not generate video or images we append the period to compute the fps
+            PlayStream.list_period.append(self.new_time_for_fps-self.old_time)
+        else:
+            self.normalPeriod = True
         self.old_time = self.new_time_for_fps
         if len(PlayStream.list_period)>10:
             PlayStream.list_period.pop(0)
@@ -246,11 +251,8 @@ class PlayStream():
             self._capture.release()
 
     def generateVideo(self,directory):
-        nombreInfraccion = datetime.now().strftime('%Y%m%d_%H%M%S')
-        print('Writing: ' + nombreInfraccion)
-        directorioActual = directory
-        current_video = directorioActual + '/' + nombreInfraccion + '.avi'
-
+        current_video = directory + '.avi'
+        print('Saving video: ' + current_video)
         aEntregar = cv2.VideoWriter(current_video,PlayStream.fourcc, self.fps,self.resolution)
 
         for index,frame in PlayStream.historial.items():
@@ -259,20 +261,20 @@ class PlayStream():
             except Exception as e:
                 print('Problem with frame {} because of {}'.format(index,e))
         aEntregar.release()
+        self.normalPeriod = False
         #os.system('ffmpeg -i {} {}.mp4'.format(nombreVideo,nombreVideo[:-4]))
         #os.system('rm {}'.format(nombreVideo))
 
-    @staticmethod
-    def exportHistorialAsImages(pathToSave):
+    def exportHistorialAsImages(self,pathToSave):
         contador = 0
         inicio = min(PlayStream.historial)
         final = max(PlayStream.historial)
-        subdir = pathToSave + '/' + datetime.now().strftime('%Y%m%d_%H%M%S')
-        print('Saving images in: ' + subdir)
-        if not os.path.exists(subdir):
-            os.makedirs(subdir)
+        print('Saving images in: ' + pathToSave)
+        if not os.path.exists(pathToSave):
+            os.makedirs(pathToSave)
         for indice in range(inicio,final):
             imagen = PlayStream.historial[indice]
             file_name = '/{counter}.jpg'.format(counter = contador)
-            cv2.imwrite(subdir+file_name,imagen)
+            cv2.imwrite(pathToSave+file_name,imagen)
             contador += 1
+        self.normalPeriod = False
