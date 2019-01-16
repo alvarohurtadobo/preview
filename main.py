@@ -66,8 +66,8 @@ if __name__ == '__main__':
     counter_for_images = args.next
 
     print('Started program at {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
-
-    cv2.namedWindow('Preview', cv2.WND_PROP_FULLSCREEN)
+    if args.show_image:
+        cv2.namedWindow('Preview', cv2.WND_PROP_FULLSCREEN)
 
     while True:
         try:
