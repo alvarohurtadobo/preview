@@ -14,17 +14,49 @@ from imutils.video import VideoStream
 class ImageCapture():
     def __init__(self,path_to_image):
         self.path_to_image = path_to_image
+
         if os.path.isfile(self.path_to_image):
             self.ret = True 
         else:
             self.ret = False
-        self.image = cv2.imread(self.path_to_image)
-        print('Read image size: ',self.image.shape)
+            print('No image found')
+    
+        self.ret, self.image = self.read()
+        print('Image size: ',self.image.shape)
+
+        # Auxiliar variables
         self.camera = None
-        
 
     def read(self):
         self.image = cv2.imread(self.path_to_image)
+        return self.ret, self.image
+
+    def set(self,parameter,variable):
+        pass
+
+class FolderCapture():
+    def __init__(self,path_to_folder):
+        self.path_to_folder = path_to_folder
+        # If we are in folder mode check if there are images on it
+        self.images = [image for image in os.listdir(self.path_to_folder) if '.jpg' in image or 'png' in image]
+        self.images = sorted(self.images)
+        if len(self.images) > 0:
+            self.ret = True 
+        else:
+            self.ret = False
+
+        print('Reading images: '+self.path_to_folder)
+        
+        ret, self.image = self.read()
+        print('Image size: ',self.image.shape)
+
+        # Auxiliar variables
+        self.camera = None
+
+    def read(self):
+        current_image = self.images.pop(0)
+        self.image = cv2.imread(self.path_to_folder+'/'+current_image)
+        self.images.append(current_image)
         return self.ret, self.image
 
     def set(self,parameter,variable):
@@ -101,21 +133,25 @@ class PlayStream():
         else:
             # Let's remove the undesired characters:
             self.input_video = self.input_video.replace(' ','')       # Remove when updated validators
-            if '.mp4' in self.input_video or '.avi' in self.input_video:
-                self._video_souce = "video_file"
-            elif '.png' in self.input_video or '.jpg' in self.input_video:
-                self._video_souce = "image_file"
+            if '*' in self.input_video:
+                self._video_souce = "image_folder"
+                self.input_video = self.input_video.split('*')[0]
             else:
-                # A IP source must have three points and maybe a colon:
-                number_of_dots = len(self.input_video.split('.')) - 1
-                if number_of_dots == 3:
-                    self._video_souce = "IP_camera"
+                if '.mp4' in self.input_video or '.avi' in self.input_video:
+                    self._video_souce = "video_file"
+                elif '.png' in self.input_video or '.jpg' in self.input_video:
+                    self._video_souce = "image_file"
                 else:
-                    try:
-                        desiredUsbInput = int(input_video)
-                        self._video_souce = "usbcamera"
-                    except:
-                        self._video_souce = "video_file"
+                    # A IP source must have three points and maybe a colon:
+                    number_of_dots = len(self.input_video.split('.')) - 1
+                    if number_of_dots == 3:
+                        self._video_souce = "IP_camera"
+                    else:
+                        try:
+                            desiredUsbInput = int(input_video)
+                            self._video_souce = "usbcamera"
+                        except:
+                            self._video_souce = "video_file"
         
         print('[INFO STREAM]:',self._video_souce,'source selected')
 
@@ -154,6 +190,12 @@ class PlayStream():
                         print('Tried ',path + input_video)
                         self._capture = ImageCapture(path + input_video)
                         break
+        elif self._video_souce == "image_folder":
+            # In case of a file we try all possible locations for the file
+            if os.path.isdir(self.input_video):
+                self._capture = FolderCapture(self.input_video)
+            else:
+                print('The path provided does not match any existing folder')
         else:
             # In case of a usb camera we try to access it
             try:
@@ -197,7 +239,7 @@ class PlayStream():
             
     def full_ip_address(self):
         # Create IP address
-        return self.ip_format[0] + self.ip_address_with_port + self.ip_format[1]
+        return self.ip_format[0] + self.input_video + self.ip_format[1]
 
     def set_address_format(self, beforeIP,afterIP):
         # Change IP Address
@@ -245,6 +287,8 @@ class PlayStream():
             else:
                 ret = False
         elif self._video_souce == "image_file":
+            ret, frame = self._capture.read()
+        elif self._video_souce == "image_folder":
             ret, frame = self._capture.read()
         elif self._video_souce == "usbcamera":
             ret, frame = self._capture.read()

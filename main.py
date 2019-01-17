@@ -67,6 +67,7 @@ if __name__ == '__main__':
             
             if not ret:
                 print('Ret False, could not get any frame at: {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
+
             if args.show_image:
                 cv2.imshow('Preview',frame)
             else:
