@@ -11,6 +11,26 @@ from imutils.video import VideoStream
 
 #from ipcamera import IPCamera
 
+class ImageCapture():
+    def __init__(self,path_to_image):
+        self.path_to_image = path_to_image
+        if os.path.isfile(self.path_to_image):
+            self.ret = True 
+        else:
+            self.ret = False
+        self.image = cv2.imread(self.path_to_image)
+        print('Read image size: ',self.image.shape)
+        self.camera = None
+        
+
+    def read(self):
+        self.image = cv2.imread(self.path_to_image)
+        return self.ret, self.image
+
+    def set(self,parameter,variable):
+        pass
+
+
 class PlayStream():
     """
     This class combines file, usbcamera and picamera inputs
@@ -20,8 +40,7 @@ class PlayStream():
     list_period = []
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     
-    def __init__(self,  input_video = None, 
-                        ip_address_with_port = None,
+    def __init__(self,  input_video = None,
                         resolution = (320,240),
                         fake_gray_scale = False,
                         brightness = 50,
@@ -63,30 +82,44 @@ class PlayStream():
             self.width = resolution[0]
             self.height = resolution[1]
         
-        self._video_souce = "picamera"                      # Can be "picamera", "usbcamera" or "file"
+        self._video_souce = "pi_camera"                      # Can be "pi_camera", "usbcamera" or "video_file"
 
         # File paths:
         self._video_paths = [self.home_route+'/trafficFlow/trialVideos/']
+        self._image_paths = [self.home_route+'/trafficFlow/prototipo/installationFiles/']
 
         # IP camera settings
         self.ip_format = ['rtsp://admin:DeMS2018@','/Streaming/channels/1/preview']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
         #self.ip_format = ['rtsp://pi:dems@','/']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
-        
-        self.ip_address_with_port = ip_address_with_port                        # 192.168.1.20:554
 
-        if ip_address_with_port:
-            self._video_souce = "IPcamera"
-        elif input_video:
-            input_video = input_video.replace(' ','')       # Remove when updated validators
-            try:
-                desiredUsbInput = int(input_video)
-                self._video_souce = "usbcamera"
-            except:
-                self._video_souce = "file"
+        self.input_video = input_video
+        # We first define the nature of the input
+
+        # If not stated otherwise we use the pi camera:
+        if not self.input_video:
+            self._video_souce = "pi_camera"
+        else:
+            # Let's remove the undesired characters:
+            self.input_video = self.input_video.replace(' ','')       # Remove when updated validators
+            if '.mp4' in self.input_video or '.avi' in self.input_video:
+                self._video_souce = "video_file"
+            elif '.png' in self.input_video or '.jpg' in self.input_video:
+                self._video_souce = "image_file"
+            else:
+                # A IP source must have three points and maybe a colon:
+                number_of_dots = len(self.input_video.split('.')) - 1
+                if number_of_dots == 3:
+                    self._video_souce = "IP_camera"
+                else:
+                    try:
+                        desiredUsbInput = int(input_video)
+                        self._video_souce = "usbcamera"
+                    except:
+                        self._video_souce = "video_file"
         
         print('[INFO STREAM]:',self._video_souce,'source selected')
 
-        if self._video_souce == "picamera":
+        if self._video_souce == "pi_camera":
             #we introduce the picamera libraries
             try:
                 if resolution:
@@ -99,10 +132,10 @@ class PlayStream():
                 self._capture.camera.brightness = self.brightness
             except:
                 print('Could not set brightness to {}'.format(self.brightness))
-        elif self._video_souce == "IPcamera":
+        elif self._video_souce == "IP_camera":
             self._capture = cv2.VideoCapture(self.full_ip_address())
             #self._capture = IPCamera(self.full_ip_address())
-        elif self._video_souce == "file":
+        elif self._video_souce == "video_file":
             # In case of a file we try all possible locations for the file
             if os.path.isfile(input_video):
                 self._capture = cv2.VideoCapture(input_video)
@@ -110,6 +143,16 @@ class PlayStream():
                 for path in self._video_paths:
                     if os.path.isfile(path + input_video):
                         self._capture = cv2.VideoCapture(path + input_video)
+                        break
+        elif self._video_souce == "image_file":
+            # In case of a file we try all possible locations for the file
+            if os.path.isfile(input_video):
+                self._capture = ImageCapture(input_video)
+            else:
+                for path in self._image_paths:
+                    if os.path.isfile(path + input_video):
+                        print('Tried ',path + input_video)
+                        self._capture = ImageCapture(path + input_video)
                         break
         else:
             # In case of a usb camera we try to access it
@@ -141,7 +184,7 @@ class PlayStream():
     def set_brightness(self,new_brightness):
         # Set the brightness only for the pi camera
         self.brightness = new_brightness
-        if self._video_souce == "picamera":
+        if self._video_souce == "pi_camera":
             self._capture.camera.brightness = self.brightness
 
     def set_grayscale(self):
@@ -164,6 +207,11 @@ class PlayStream():
         # In case a custom route to the videos is added for the search job
         self._video_paths.append(new_path_to_video)
         return len(self._video_paths)
+
+    def addImageRoutes(self,new_path_to_images):
+        # In case a custom route to the videos is added for the search job
+        self._image_paths.append(new_path_to_images)
+        return len(self._image_paths)
 
     def read(self):
         """
@@ -190,15 +238,17 @@ class PlayStream():
                     json.dump(new_configs, json_file)
                 os.rename(expected_configs_file_name,new_configs_file_name)
                 
-        if self._video_souce == "picamera":
+        if self._video_souce == "pi_camera":
             frame = self._capture.read()
             if len(frame.shape)>=1:
                 ret = True
             else:
                 ret = False
+        elif self._video_souce == "image_file":
+            ret, frame = self._capture.read()
         elif self._video_souce == "usbcamera":
             ret, frame = self._capture.read()
-        elif self._video_souce == "IPcamera":
+        elif self._video_souce == "IP_camera":
             ret, frame = self._capture.read()
         else:
             frames_retraso = int((time.time() - self._init_time)*self.fps)
@@ -247,7 +297,7 @@ class PlayStream():
         return 1/self.getPeriod()
 
     def release(self):
-        if not self._video_souce == "picamera":
+        if not self._video_souce == "pi_camera":
             self._capture.release()
 
     def generateVideo(self,directory):

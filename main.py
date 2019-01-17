@@ -19,7 +19,6 @@ parser.add_argument("-s", "--show_image",   type = bool, default = False, help =
 parser.add_argument("-i", "--video_file",   type = str, default = None,   help = "Specify optional video file")
 parser.add_argument("-W", "--width",        type = int, default = 320,    help = "Specify optional video width")
 parser.add_argument("-H", "--height",       type = int, default = 240,    help = "Specify optional video height")
-parser.add_argument("-p", "--ip_camera",    type = str, default = None,   help = "Specify optional ip camera file")
 parser.add_argument("-g", "--grayscale",    type = bool, default = False, help = "Set grayscale mode")
 parser.add_argument("-b", "--brightness",   type = int, default = 50,     help = "Specify optional brightness for the camera")
 #parser.add_argument("-t", "--threaded",     type = bool, default = False,  help = "Optional enable threaded module")
@@ -37,20 +36,13 @@ if __name__ == '__main__':
     if args.autokill > 0:
         autokill = args.autokill
         print('Set autokill to {} seconds'.format(autokill))
-    if args.ip_camera:
-        miCamara = PlayStream(  ip_address_with_port = args.ip_camera,
-                                resolution = (1920,1080),
-                                historial_len = args.length,
-                                brightness = args.brightness,
-                                fake_gray_scale = args.grayscale,
-                                fps = args.fps)
-    else:
-        miCamara = PlayStream(  input_video = args.video_file,
-                                resolution = (args.width,args.height),
-                                historial_len = args.length,
-                                brightness = args.brightness,
-                                fake_gray_scale = args.grayscale,
-                                fps = args.fps)
+
+    miCamara = PlayStream(  input_video = args.video_file,
+                            resolution = (args.width,args.height),
+                            historial_len = args.length,
+                            brightness = args.brightness,
+                            fake_gray_scale = args.grayscale,
+                            fps = args.fps)
                                 
     server = ServerController()
 
@@ -71,7 +63,8 @@ if __name__ == '__main__':
 
     while True:
         try:
-            ret,frame = miCamara.read() 
+            ret, frame = miCamara.read() 
+            
             if not ret:
                 print('Ret False, could not get any frame at: {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
             if args.show_image:
@@ -99,5 +92,5 @@ if __name__ == '__main__':
                 cv2.imwrite(exportOutput + '/' +datetime.now().strftime('%Y%m%d_%H%M%S')+'.png',frame)
                 
         except Exception as e:
-            print('Exception {} at: {}. Leaving'.format(str(e),datetime.now().strftime('%Y%m%d_%H%M%S')))
+            print('Exception "{}" at: {}. Leaving'.format(str(e),datetime.now().strftime('%Y%m%d_%H%M%S')))
             break
