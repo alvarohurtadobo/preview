@@ -9,69 +9,16 @@ import time
 from imutils.video import FPS
 from imutils.video import VideoStream
 
-#from ipcamera import IPCamera
-
-class ImageCapture():
-    def __init__(self,path_to_image):
-        self.path_to_image = path_to_image
-
-        if os.path.isfile(self.path_to_image):
-            self.ret = True 
-        else:
-            self.ret = False
-            print('No image found')
-    
-        self.ret, self.image = self.read()
-        print('Image size: ',self.image.shape)
-
-        # Auxiliar variables
-        self.camera = None
-
-    def read(self):
-        self.image = cv2.imread(self.path_to_image)
-        return self.ret, self.image
-
-    def set(self,parameter,variable):
-        pass
-
-class FolderCapture():
-    def __init__(self,path_to_folder):
-        self.path_to_folder = path_to_folder
-        # If we are in folder mode check if there are images on it
-        self.images = [image for image in os.listdir(self.path_to_folder) if '.jpg' in image or 'png' in image]
-        self.images = sorted(self.images)
-        if len(self.images) > 0:
-            self.ret = True 
-        else:
-            self.ret = False
-
-        print('Reading images: '+self.path_to_folder)
-        
-        ret, self.image = self.read()
-        print('Image size: ',self.image.shape)
-
-        # Auxiliar variables
-        self.camera = None
-
-    def read(self):
-        current_image = self.images.pop(0)
-        self.image = cv2.imread(self.path_to_folder+'/'+current_image)
-        self.images.append(current_image)
-        return self.ret, self.image
-
-    def set(self,parameter,variable):
-        pass
-
+from filestream import FileStream
 
 class PlayStream():
     """
-    This class combines file, usbcamera and picamera inputs
+    This class combines all video and file inputs for camera
     """
     historial = {}
     frame_number = 0
     list_period = []
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    
     def __init__(self,  input_video = None,
                         resolution = (320,240),
                         fake_gray_scale = False,
@@ -79,150 +26,8 @@ class PlayStream():
                         real_time = False,
                         historial_len = 0,
                         fps = 6):
-        """
-        The class is started with a "input_video" in case of a file and a USB camera or None with picamera
-        The default resolution is 320x240 and can be changed as resolution = (w,h)
-        """
-        # General settings
-        self.fps = fps
-        self.home_route = os.getenv('HOME')
 
-        # Timing variables settings
-        self._init_time = time.time()
-        self.last_time = self._init_time 
-        self.new_time_for_fps = time.time()
-        self.old_time = self.new_time_for_fps
-        self.emulate_real_time = real_time
-
-        # Config settings
-        self.fake_gray_scale = fake_gray_scale
-        self.brightness = brightness
-        self.width = None
-        self.height = None
-
-        self.historial_len = historial_len*self.fps
-        if self.historial_len < 0:
-            self.historial_len = 0
-
-        self.normalPeriod = True
-
-        # Main variables
-        self._capture = None
-        
-        if resolution:
-            self.resolution = resolution
-            self.width = resolution[0]
-            self.height = resolution[1]
-        
-        self._video_souce = "pi_camera"                      # Can be "pi_camera", "usbcamera" or "video_file"
-
-        # File paths:
-        self._video_paths = [self.home_route+'/trafficFlow/trialVideos/']
-        self._image_paths = [self.home_route+'/trafficFlow/prototipo/installationFiles/']
-
-        # IP camera settings
-        self.ip_format = ['rtsp://admin:DeMS2018@','/Streaming/channels/1/preview']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
-        #self.ip_format = ['rtsp://pi:dems@','/']    # rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
-
-        self.input_video = input_video
-        # We first define the nature of the input
-
-        # If not stated otherwise we use the pi camera:
-        if not self.input_video:
-            self._video_souce = "pi_camera"
-        else:
-            # Let's remove the undesired characters:
-            self.input_video = self.input_video.replace(' ','')       # Remove when updated validators
-            if '*' in self.input_video:
-                self._video_souce = "image_folder"
-                self.input_video = self.input_video.split('*')[0]
-            else:
-                if '.mp4' in self.input_video or '.avi' in self.input_video:
-                    self._video_souce = "video_file"
-                elif '.png' in self.input_video or '.jpg' in self.input_video:
-                    self._video_souce = "image_file"
-                else:
-                    # A IP source must have three points and maybe a colon:
-                    number_of_dots = len(self.input_video.split('.')) - 1
-                    if number_of_dots == 3:
-                        self._video_souce = "IP_camera"
-                    else:
-                        try:
-                            desiredUsbInput = int(input_video)
-                            self._video_souce = "usbcamera"
-                        except:
-                            self._video_souce = "video_file"
-        
-        print('[INFO STREAM]:',self._video_souce,'source selected')
-
-        if self._video_souce == "pi_camera":
-            #we introduce the picamera libraries
-            try:
-                if resolution:
-                    self._capture  = VideoStream(usePiCamera=True, resolution=self.resolution).start()
-                else:
-                    self._capture  = VideoStream(usePiCamera=True).start()
-            except Exception as e:
-                print('Could not access any picamera, error: '+str(e))
-            try:
-                self._capture.camera.brightness = self.brightness
-            except:
-                print('Could not set brightness to {}'.format(self.brightness))
-        elif self._video_souce == "IP_camera":
-            self._capture = cv2.VideoCapture(self.full_ip_address())
-            #self._capture = IPCamera(self.full_ip_address())
-        elif self._video_souce == "video_file":
-            # In case of a file we try all possible locations for the file
-            if os.path.isfile(input_video):
-                self._capture = cv2.VideoCapture(input_video)
-            else:
-                for path in self._video_paths:
-                    if os.path.isfile(path + input_video):
-                        self._capture = cv2.VideoCapture(path + input_video)
-                        break
-        elif self._video_souce == "image_file":
-            # In case of a file we try all possible locations for the file
-            if os.path.isfile(input_video):
-                self._capture = ImageCapture(input_video)
-            else:
-                for path in self._image_paths:
-                    if os.path.isfile(path + input_video):
-                        print('Tried ',path + input_video)
-                        self._capture = ImageCapture(path + input_video)
-                        break
-        elif self._video_souce == "image_folder":
-            # In case of a file we try all possible locations for the file
-            if os.path.isdir(self.input_video):
-                self._capture = FolderCapture(self.input_video)
-            else:
-                print('The path provided does not match any existing folder')
-        else:
-            # In case of a usb camera we try to access it
-            try:
-                self._capture = cv2.VideoCapture(int(desiredUsbInput))
-                ret,frame = self._capture.read()
-                auxiliarShape = frame.shape
-            except Exception as e:
-                print('Could not load the USB camera trying other ports')
-                for sourceTrial in range(3):
-                    print('Trying {}'.format(sourceTrial))
-                    try:
-                        self._capture = cv2.VideoCapture(sourceTrial)
-                        ret,frame = self._capture.read()
-                        if ret:
-                            break
-                        print('Success reading usb camera at {}'.format(sourceTrial))
-                    except:
-                        pass
-        
-            if self._capture:
-                # In case of a usb camera we set the parameters
-                self._capture.set(cv2.CAP_PROP_FPS, 30)
-                if self.resolution:
-                    self._capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-                    self._capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
-        time.sleep(1.0)
-
+    
     def set_brightness(self,new_brightness):
         # Set the brightness only for the pi camera
         self.brightness = new_brightness
@@ -239,7 +44,8 @@ class PlayStream():
             
     def full_ip_address(self):
         # Create IP address
-        return self.ip_format[0] + self.input_video + self.ip_format[1]
+        #return self.ip_format[0] + self.input_video + self.ip_format[1]
+        return self.input_video
 
     def set_address_format(self, beforeIP,afterIP):
         # Change IP Address
@@ -249,11 +55,6 @@ class PlayStream():
         # In case a custom route to the videos is added for the search job
         self._video_paths.append(new_path_to_video)
         return len(self._video_paths)
-
-    def addImageRoutes(self,new_path_to_images):
-        # In case a custom route to the videos is added for the search job
-        self._image_paths.append(new_path_to_images)
-        return len(self._image_paths)
 
     def read(self):
         """
