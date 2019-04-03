@@ -65,8 +65,9 @@ class FileStream():
 
         self.ret, self.frame = self.read()
         self.shape = self.frame.shape
+        self.received_resolution = (self.shape[1],self.shape[0])
 
-        logging.info('[INFO STREAM]: Emulating {} with size: {}'.format(self.type,self.shape))
+        logging.info('[CREATED FILE STREAM] type: {} and size: {}'.format(self.type,self.shape))
 
     def read(self):
         if self.type == 'image':

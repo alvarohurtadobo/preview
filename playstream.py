@@ -49,7 +49,8 @@ class PlayStream():
                                             gray_scale = self.gray_scale,
                                             brightness = self.brightness)
 
-        
+        self.received_resolution = self.camera.received_resolution
+
     def read(self):
         """
         The most importan class tha unifies both ways of accessing the picamera and usb camera
@@ -112,8 +113,8 @@ class PlayStream():
 
     def generateVideo(self,directory):
         current_video = directory + '.avi'
-        logging.info('Saving video: ' + current_video)
-        aEntregar = cv2.VideoWriter(current_video,PlayStream.fourcc, self.fps,self.resolution)
+        logging.info('Saving video: {} with len: {}, fps:{} and resolution: {}'.format(current_video,len(PlayStream.historial),self.fps,self.received_resolution))
+        aEntregar = cv2.VideoWriter(current_video,PlayStream.fourcc, self.fps, self.received_resolution)
 
         for index,frame in PlayStream.historial.items():
             try:

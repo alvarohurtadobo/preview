@@ -46,8 +46,6 @@ class MultiStream():
             else:
                 raise Exception('Camera input set incorrectly')
 
-        logging.info('[INFO STREAM]: '+self._video_souce +' source selected')
-
         if self._video_souce == "pi_camera":
             #we introduce the picamera libraries
             self._capture = HighPiCamera(   width = self.width,
@@ -62,6 +60,12 @@ class MultiStream():
             self._capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
             self._capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         time.sleep(1.0)
+
+        self.ret, self.frame = self.read()
+        self.shape = self.frame.shape
+        self.received_resolution = (self.shape[1],self.shape[0])
+
+        logging.info('[CREATED MULTI STREAM] type: {} and size: {}'.format(self._video_souce,self.shape))
 
     def set_brightness(self,new_brightness):
         # Set the brightness only for the pi camera

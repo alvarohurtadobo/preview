@@ -101,7 +101,7 @@ class PiCameraEmulator():
         self._list_of_images = sorted([image for image in os.listdir(new_folder) if '.jpg' in image or '.png' in image])
         self._number_of_images = len(self._list_of_images)
         self._counter = 0
-        print('Loaded: {} with {} images'.format(new_folder,self._number_of_images))
+        #print('Loaded: {} with {} images'.format(new_folder,self._number_of_images))
 
     def __next__(self):
         path_to_image = PiCameraEmulator.path_to_image_folder + '/' + self._list_of_images[self._counter%self._number_of_images]
