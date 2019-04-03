@@ -13,16 +13,19 @@ class FileStream():
     """
 
     def __init__(self,  path_to_file,
-                        fps = 30):
+                        fps = 30,
+                        resolution = None):
         # We store the provided values
         self.path_to_file = path_to_file
         self.fps = fps
         self.period = 1/self.fps
+        self.resolution = resolution
 
         # Fundamental Variables
         self.type = ""                                  # can Be Image, Video or Folder
         self.ret = False
         self.camera = None
+        self.rgb_scale = 1
 
         # Auxiliar Variables
         self.frames = []
@@ -67,21 +70,28 @@ class FileStream():
 
     def read(self):
         if self.type == 'image':
-            self.frame = cv2.imread(self.path_to_file)
+            self.frame = cv2.imread(self.path_to_file,self.rgb_scale)
         elif self.type == 'video':
             # We emulate jumping frames to match the required fps:
             for i in range(self._jump_frames):
                 self.ret, self.frame = self.camera.read()
+            if self.rgb_scale == 0:
+                self.frame = cv2.cvtColor(self.frame, cv2.BGR2GRAY)
         elif self.type == 'folder':
             # We loop in the images of the folder
             current_image_path = self.frames.pop(0)
             # We read them
-            self.frame = cv2.imread(self.path_to_file+'/'+current_image_path)
+            self.frame = cv2.imread(self.path_to_file+'/'+current_image_path,self.rgb_scale)
             self.frames.append(current_image_path)
             # If we receive something the read was done successful
             self.ret = False
-            if self.frame:
+            if self.frame.any():
                 self.ret = True
+
+        if self.resolution:
+            # Normally resolution is set to None, otherwise we force the image to be set to this (w,h)
+            self.frame = cv2.resize(self.frame,self.resolution)
+
         # We emulate the desired fps:
         while time.time() - self._last_time < self.period:
             True
@@ -89,4 +99,18 @@ class FileStream():
         return self.ret, self.frame
 
     def set(self,parameter,variable):
+        pass
+    
+    def set_brightness(self,new_brightness):
+        logging.info('This feature is to be updated')
+
+    def set_grayscale(self):
+        self.rgb_scale = 0
+        logging.info('Changed to read files in grayscale')
+
+    def set_color(self):
+        self.rgb_scale = 1
+        logging.info('Changed to read files in rgb')
+
+    def release(self):
         pass
