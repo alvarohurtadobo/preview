@@ -99,5 +99,8 @@ class MultiStream():
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             #frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
 
-        frame.setflags(write=True)
+        if ret:
+            frame.setflags(write=True)
+        else:
+            logging.error('No frame received')
         return ret, frame

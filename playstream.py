@@ -40,8 +40,6 @@ class PlayStream():
         self.last_time = time.time()
         self.old_time = self.last_time
 
-        # Cleaning input, when launched from server uses to add a space, leading to errors:
-        self.input_video = self.input_video.replace(" ","")
         self.known_paths = [os.getenv('SOURCE_VIDEO_PATH')+'/']
 
         if self.input_video:
@@ -54,6 +52,8 @@ class PlayStream():
                                             fps = self.fps,
                                             resolution = self.resolution)
             else:
+                # Cleaning input, when launched from server uses to add a space, leading to errors:
+                self.input_video = self.input_video.replace(" ","")
                 self.camera = MultiStream(  input_video = self.input_video,
                                             resolution = self.resolution,
                                             gray_scale = self.gray_scale,
