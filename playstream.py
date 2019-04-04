@@ -21,7 +21,7 @@ class PlayStream():
     list_period = []
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     def __init__(self,  input_video = None,
-                        resolution = (320,240),
+                        resolution = None,
                         fake_gray_scale = False,
                         brightness = 50,
                         real_time = False,
@@ -42,10 +42,17 @@ class PlayStream():
 
         # Cleaning input, when launched from server uses to add a space, leading to errors:
         self.input_video = self.input_video.replace(" ","")
+        self.known_paths = [os.getenv('SOURCE_VIDEO_PATH')+'/']
 
         if self.input_video:
-            if not self.input_video.isdigit() and os.path.exists(self.input_video):
-                self.camera = FileStream(path_to_file = self.input_video, fps = self.fps)
+            complete_file_path = self.verify_file_path(self.input_video)
+            if not self.input_video.isdigit() and complete_file_path:
+                
+                # If resolution set up manually we force the given resolution
+                # None means the natural given resolution
+                self.camera = FileStream(   path_to_file = complete_file_path,
+                                            fps = self.fps,
+                                            resolution = self.resolution)
             else:
                 self.camera = MultiStream(  input_video = self.input_video,
                                             resolution = self.resolution,
@@ -53,6 +60,19 @@ class PlayStream():
                                             brightness = self.brightness)
 
         self.received_resolution = self.camera.received_resolution
+        #print('Given resolution {}, received resolution {}'.format(self.resolution,self.received_resolution))
+
+    def add_file_path(self,new_folder):
+        self.known_paths.append(new_folder+'/')
+
+    def verify_file_path(self,file_name):
+        if os.path.exists(self.input_video):
+            return self.input_video
+
+        for path in self.known_paths:
+            if os.path.exists(path + file_name):
+                return path + file_name
+        return None
 
     def read(self):
         """

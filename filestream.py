@@ -38,7 +38,8 @@ class FileStream():
 
         # Check if the file exists
         if not os.path.exists(self.path_to_file):
-            raise Exception('No file or folder introduced, verify the path provided')
+            print(self.path_to_file)
+            raise Exception('No file or folder introduced, verify the path provided: '+self.path_to_file)
 
         # Find out what type of recording we are doing
         if os.path.isfile(self.path_to_file):
