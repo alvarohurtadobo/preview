@@ -35,6 +35,7 @@ class MultiStream():
 
         # We first define the nature of the input
         ## If not stated otherwise we use the pi camera:
+        
         if not self.input_video:
             self._video_souce = "pi_camera"
         else:

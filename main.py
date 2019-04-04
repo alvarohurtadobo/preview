@@ -27,7 +27,7 @@ parser.add_argument("-H", "--height",       type = int,  default = 240,    help 
 parser.add_argument("-g", "--grayscale",    type = bool, default = False,  help = "Set grayscale mode")
 parser.add_argument("-d", "--debug",        type = bool, default = False,  help = "Set logging to debug")
 parser.add_argument("-b", "--brightness",   type = int,  default = 50,     help = "Specify optional brightness for the camera")
-#parser.add_argument("-t", "--threaded",     type = bool, default = False,  help = "Optional enable threaded module")
+parser.add_argument("-t", "--threaded",     type = bool, default = False,  help = "Optional enable threaded module")
 parser.add_argument("-l", "--length",       type = int,  default = 10,     help = "Lenght for historial in seconds, it is adviced not to be greater than period")
 #parser.add_argument("-r", "--real",         type = bool, default = False, help = "Emulate real time, for saved video only")
 args = parser.parse_args()

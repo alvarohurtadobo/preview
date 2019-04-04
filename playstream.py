@@ -40,6 +40,9 @@ class PlayStream():
         self.last_time = time.time()
         self.old_time = self.last_time
 
+        # Cleaning input, when launched from server uses to add a space, leading to errors:
+        self.input_video = self.input_video.replace(" ","")
+
         if self.input_video:
             if not self.input_video.isdigit() and os.path.exists(self.input_video):
                 self.camera = FileStream(path_to_file = self.input_video, fps = self.fps)
@@ -56,13 +59,17 @@ class PlayStream():
         The most importan class tha unifies both ways of accessing the picamera and usb camera
         """
         # We look for changes every 3 seconds:
+        #print('READ {}, len {}'.format(os.getenv('changed'),len(os.getenv('changed'))))
         if os.getenv('changed') == 'True':
             self.set_brightness(int(os.getenv('brightness')))
+            #print('\tchanged')
             if os.getenv('gray') == True:
                 self.set_grayscale()
+                #print('\t\tSet gray')
             else:
                 self.set_color()
-            os.system('export changed=False')
+                #print('\t\tSet rgb')
+            os.environ['changed'] = 'False'
 
         ret, frame = self.camera.read()
 
