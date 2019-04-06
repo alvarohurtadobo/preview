@@ -58,6 +58,13 @@ class PlayStream():
                                             resolution = self.resolution,
                                             gray_scale = self.gray_scale,
                                             brightness = self.brightness)
+        else:
+            # if no source is selected by default we set the Pi camera:
+            self.camera = MultiStream(  input_video = self.input_video,
+                                        resolution = self.resolution,
+                                        gray_scale = self.gray_scale,
+                                        brightness = self.brightness)
+
 
         self.received_resolution = self.camera.received_resolution
         #print('Given resolution {}, received resolution {}'.format(self.resolution,self.received_resolution))
