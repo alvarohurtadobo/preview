@@ -44,6 +44,7 @@ class MultiStream():
             elif "://" in self.input_video:
                 # IP camera is like: rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
                 self._video_souce = "IP_camera"
+                
             else:
                 raise Exception('Camera input: {}. set incorrectly'.format(self._video_souce ))
 
@@ -56,7 +57,7 @@ class MultiStream():
         elif self._video_souce == "IP_camera":
             self._capture = cv2.VideoCapture(self.input_video)
         else:
-            self._capture = cv2.VideoCapture(self.input_video)
+            self._capture = cv2.VideoCapture(int(self.input_video))
             self._capture.set(cv2.CAP_PROP_FPS, 30)
             self._capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
             self._capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
