@@ -11,6 +11,7 @@ Examples:
 3. IP_camera.- To run with a IP camera just add the complete rtsp path to the images:
     python3 main.py -s True -i "rtsp://admin:DeMS@192.168.1.14:554/live/0/MAIN"
     python3 main.py -s True -i "rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1"
+    * To enter in IP mode the name must have the string '://' in its name
 4. file_stream.- To run with a folder of images just provide the source to the images:
     python3 main.py -s True -i "/home/pi/WORKDIR"
 5. image_stream / video_stream.- To run with a single file just add the path to the image or video: avi, mp4, jpg, png are accepted
@@ -18,13 +19,31 @@ Examples:
 # For videos in the '/home/pi/trafficFlow/trialVideos/' directory, you can only state the name of the file
     python3 main.py -s True -i "sar2.mp4"
 
-The outputs of the file are sent to the preview.txt file
+The outputs of the file are sent to the preview.txt file, to store in debug mode
+    -d True
 
 Parameters to setup the width and height, for Picamera/webcam only only
     -W 2464
     -H 1080
 
+Set PERIOD [sec] for reporting fps and standar deviation:
+    -p <PERIOD> [sec]
 
+To capture a number videos <VIDEO_NUMBER> or captures <CAPTURE_NUMBER> of every period <PERIOD> with lenght <LENGTH> we set:
+    -v 10 [10 videos will be geretated every <PERIOD> time]
+    -c 10 [10 frame capture shots will be geretated every <PERIOD> time]
+    -l 10 [sec, duration of the recorded videos and frames]
+
+Set the program to self kill in a certain time:
+    -k 10 [sec, time of duration of the program]
+
+Set the frames per second intended for the application (depending on the camera we could get less):
+    -f 10 [frames per second]
+
+Other parameter for file stream are grayscale:
+    -g [True/False]
+For picamera the brigthness can be adjusted:
+    -b [0-100]
 """
 
 import os

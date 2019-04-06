@@ -73,7 +73,7 @@ class MultiStream():
             raise Exception('Did not receive any frame')
         self.shape = self.frame.shape
         self.received_resolution = (self.shape[1],self.shape[0])
-
+        self.set_brightness(brightness)
         logging.info('[CREATED MULTI STREAM] type: {} and size: {}'.format(self._video_souce,self.shape))
 
     def set_brightness(self,new_brightness):

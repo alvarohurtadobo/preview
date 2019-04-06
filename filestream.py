@@ -14,7 +14,8 @@ class FileStream():
 
     def __init__(self,  path_to_file,
                         fps = 30,
-                        resolution = None):
+                        resolution = None,
+                        gray_scale = False):
         # We store the provided values
         self.path_to_file = path_to_file
         self.fps = fps
@@ -26,6 +27,8 @@ class FileStream():
         self.ret = False
         self.camera = None
         self.rgb_scale = 1
+        if gray_scale:
+            self.rgb_scale = 0
 
         # Auxiliar Variables
         self.frames = []
@@ -78,7 +81,7 @@ class FileStream():
             for i in range(self._jump_frames):
                 self.ret, self.frame = self.camera.read()
             if self.rgb_scale == 0:
-                self.frame = cv2.cvtColor(self.frame, cv2.BGR2GRAY)
+                self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
         elif self.type == 'folder':
             # We loop in the images of the folder
             current_image_path = self.frames.pop(0)

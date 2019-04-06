@@ -50,7 +50,8 @@ class PlayStream():
                 # None means the natural given resolution
                 self.camera = FileStream(   path_to_file = complete_file_path,
                                             fps = self.fps,
-                                            resolution = self.resolution)
+                                            resolution = self.resolution,
+                                            gray_scale = self.gray_scale)
             else:
                 # Cleaning input, when launched from server uses to add a space, leading to errors:
                 self.input_video = self.input_video.replace(" ","")
