@@ -63,6 +63,8 @@ class MultiStream():
         time.sleep(1.0)
 
         self.ret, self.frame = self.read()
+        if not self.ret:
+            raise Exception('Did not receive any frame')
         self.shape = self.frame.shape
         self.received_resolution = (self.shape[1],self.shape[0])
 
