@@ -12,14 +12,18 @@ class HighPiCamera():
     high_source = os.getenv('SOURCE_FOLDER_PATH')
 
     def __init__(   self,
-                    width = 2560,
+                    width = 0,
                     height = 1920,
                     framerate = 2,
                     emulate = None):
 
         # Setting the parameters:
-        self._width = width
-        self._height = height
+        if width == 0 or height == 0:
+            self._width = 2560
+            self._height = 1920
+        else:
+            self._width = width
+            self._height = height
         self.framerate = framerate
         self.video_port = True
         self._emulate = emulate

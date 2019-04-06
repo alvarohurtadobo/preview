@@ -23,8 +23,12 @@ class MultiStream():
         # General settings
         self.input_video = input_video
         self.resolution = resolution
-        self.width = self.resolution[0]
-        self.height = self.resolution[1]
+        if self.resolution:
+            self.width = self.resolution[0]
+            self.height = self.resolution[1]
+        else:
+            self.width = 0
+            self.height = 0
         self.gray_scale = gray_scale
         self.brightness = brightness
 
@@ -59,8 +63,9 @@ class MultiStream():
         else:
             self._capture = cv2.VideoCapture(int(self.input_video))
             self._capture.set(cv2.CAP_PROP_FPS, 30)
-            self._capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-            self._capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+            if self.resolution:
+                self._capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+                self._capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         time.sleep(1.0)
 
         self.ret, self.frame = self.read()
