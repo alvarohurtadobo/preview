@@ -35,7 +35,7 @@ class MultiStream():
 
         # We first define the nature of the input
         ## If not stated otherwise we use the pi camera:
-        
+        #print(self.input_video)
         if not self.input_video:
             self._video_souce = "pi_camera"
         else:
@@ -45,7 +45,7 @@ class MultiStream():
                 # IP camera is like: rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1
                 self._video_souce = "IP_camera"
             else:
-                raise Exception('Camera input set incorrectly')
+                raise Exception('Camera input: {}. set incorrectly'.format(self._video_souce ))
 
         if self._video_souce == "pi_camera":
             #we introduce the picamera libraries
