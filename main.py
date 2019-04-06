@@ -2,6 +2,31 @@
 This is a simple preview program and use example for the PlayStream Class
 """
 
+"""
+Examples:
+1. pi_camera.- To run with a picamera do not add any input:
+    python3 main.py -s True
+2. usb_camera.- To run with a web cam just add the index of the camera to be used
+    python3 main.py -s True -i 0
+3. IP_camera.- To run with a IP camera just add the complete rtsp path to the images:
+    python3 main.py -s True -i "rtsp://admin:DeMS@192.168.1.14:554/live/0/MAIN"
+    python3 main.py -s True -i "rtsp://admin:DeMS2018@192.168.1.2:554/Streaming/channels/1"
+4. file_stream.- To run with a folder of images just provide the source to the images:
+    python3 main.py -s True -i "/home/pi/WORKDIR"
+5. image_stream / video_stream.- To run with a single file just add the path to the image or video: avi, mp4, jpg, png are accepted
+    python3 main.py -s True -i "/home/pi/trafficFlow/trialVideos/sar2.mp4"
+# For videos in the '/home/pi/trafficFlow/trialVideos/' directory, you can only state the name of the file
+    python3 main.py -s True -i "sar2.mp4"
+
+The outputs of the file are sent to the preview.txt file
+
+Parameters to setup the width and height, for Picamera/webcam only only
+    -W 2464
+    -H 1080
+
+
+"""
+
 import os
 import cv2
 import sys
