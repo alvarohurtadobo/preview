@@ -155,7 +155,7 @@ class PlayStream():
             try:
                 aEntregar.write(frame)
             except Exception as e:
-                logging.info('Problem with frame {} because of {}'.format(index,e))
+                logging.error('Problem with frame {}'.format(index), exc_info=True)
         aEntregar.release()
 
         #os.system('ffmpeg -i {} {}.mp4'.format(nombreVideo,nombreVideo[:-4]))

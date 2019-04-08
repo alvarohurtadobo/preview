@@ -78,13 +78,14 @@ args = parser.parse_args()
 
 frame_number = 0
 
+
 if __name__ == '__main__':
     # Logging settings
     my_level = logging.INFO
     if args.debug:
         my_level = logging.DEBUG
         logging.debug('Generando DEBUG')
-    logging.basicConfig(filename='preview.txt', filemode='w', format='%(name)s - %(asctime)s : %(message)s',level=my_level)
+    logging.basicConfig(filename=os.getenv('TODAY_FOLDER')+'/preview.txt', filemode='w', format='%(name)s: %(levelname)s - %(asctime)s : %(message)s',level=my_level)
 
     # Self Kill settings
     autokill = 0
@@ -92,12 +93,15 @@ if __name__ == '__main__':
         autokill = args.autokill
         logging.info('Set autokill to {} seconds'.format(autokill))
 
-    miCamara = PlayStream(  input_video = args.video_file,
-                            resolution = (args.width,args.height),
-                            historial_len = args.length,
-                            brightness = args.brightness,
-                            fake_gray_scale = args.grayscale,
-                            fps = args.fps)
+    try:
+        miCamara = PlayStream(  input_video = args.video_file,
+                                resolution = (args.width,args.height),
+                                historial_len = args.length,
+                                brightness = args.brightness,
+                                fake_gray_scale = args.grayscale,
+                                fps = args.fps)
+    except Exception as e:
+        logging.error('Problem loading Playstream', exc_info=True)
 
     server = ServerController()
 
@@ -156,5 +160,5 @@ if __name__ == '__main__':
                 cv2.imwrite(exportOutput + '/' +datetime.now().strftime('%Y%m%d_%H%M%S')+'.png',frame)
                 
         except Exception as e:
-            logging.info('Exception "{}" at: {}. Leaving'.format(str(e),datetime.now().strftime('%Y%m%d_%H%M%S')))
+            logging.error('Exception at: {}. Leaving'.format(datetime.now().strftime('%Y%m%d_%H%M%S')), exc_info=True)
             break
