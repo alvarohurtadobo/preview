@@ -8,11 +8,12 @@ import json
 import time
 import logging
 import statistics
+import multiprocessing
 
 from filestream import FileStream
 from multistream import MultiStream
 
-class PlayStream():
+class PlayStream(multiprocessing.Process):
     """
     This class combines all video and file inputs for camera
     """
@@ -26,7 +27,11 @@ class PlayStream():
                         brightness = 50,
                         real_time = False,
                         historial_len = 0,
-                        fps = 6):
+                        fps = 6,
+                        in_pipe = None):
+        self.in_pipe = in_pipe
+        if self.in_pipe:
+            super(PlayStream, self).__init__()
 
         self.input_video = input_video
         self.resolution = resolution
@@ -69,6 +74,18 @@ class PlayStream():
 
         self.received_resolution = self.camera.received_resolution
         #print('Given resolution {}, received resolution {}'.format(self.resolution,self.received_resolution))
+
+    def run(self):
+        """
+        Main function to run in parallel
+        :return: Nothing
+        """
+        # Start the main process
+        while True:
+            ret, image = self.read()
+            image = "hola"
+            self.in_pipe.send((ret,image))
+            time.sleep(2)
 
     def add_file_path(self,new_folder):
         self.known_paths.append(new_folder+'/')

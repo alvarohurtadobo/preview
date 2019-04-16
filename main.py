@@ -52,6 +52,7 @@ import sys
 import time
 import logging
 import argparse
+import multiprocessing
 from datetime import datetime
 
 sys.path.append(os.getenv('HOME')+'/trafficFlow/flaskwebcontroller/')
@@ -72,6 +73,7 @@ parser.add_argument("-g", "--grayscale",    type = bool, default = False,  help 
 parser.add_argument("-d", "--debug",        type = bool, default = False,  help = "Set logging to debug")
 parser.add_argument("-b", "--brightness",   type = int,  default = 50,     help = "Specify optional brightness for the camera")
 parser.add_argument("-t", "--threaded",     type = bool, default = False,  help = "Optional enable threaded module")
+parser.add_argument("-m", "--multiprocess", type = bool, default = False,  help = "Multiprocessing run of the camera")
 parser.add_argument("-l", "--length",       type = int,  default = 10,     help = "Lenght for historial in seconds, it is adviced not to be greater than period")
 #parser.add_argument("-r", "--real",         type = bool, default = False, help = "Emulate real time, for saved video only")
 args = parser.parse_args()
@@ -93,13 +95,20 @@ if __name__ == '__main__':
         autokill = args.autokill
         logging.info('Set autokill to {} seconds'.format(autokill))
 
+    # If we are using multiprocessing we send a pipe to the class, otherwise we send None
+    if args.multiprocess:
+        out_pipe, in_pipe = multiprocessing.Pipe(duplex=False)
+    else:
+        in_pipe = None
+
     try:
         miCamara = PlayStream(  input_video = args.video_file,
                                 resolution = (args.width,args.height),
                                 historial_len = args.length,
                                 brightness = args.brightness,
                                 fake_gray_scale = args.grayscale,
-                                fps = args.fps)
+                                fps = args.fps,
+                                in_pipe = in_pipe)
     except Exception as e:
         logging.error('Problem loading Playstream', exc_info=True)
 
@@ -121,44 +130,71 @@ if __name__ == '__main__':
     if args.show:
         cv2.namedWindow('Preview', cv2.WND_PROP_FULLSCREEN)
 
-    while True:
-        try:
-            ret, frame = miCamara.read() 
-
-            if not ret:
-                logging.info('Ret False, could not get any frame at: {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
-
-            if args.show:
-                cv2.imshow('Preview',frame)
-            else:
-                server.sendImageIfAllowed(frame)
+    if args.multiprocess:
+        print('Execute multiprocess')
+        miCamara.start()
+        print('Created')
+        initial_time = time.time()
+        counter = 3
+        while counter:
+            print('Looping')
+            counter -= 1
             
-            frame_number += 1
-
-            if (time.time() - time_now > args.period):
-                logging.info('Last FPS: {0:.2f}, Last Period: {1:.3f}, Last Standar Deviation: {2:.5f}'.format(miCamara.getFPS(),miCamara.getPeriod(),miCamara.getStandarDeviation()/miCamara.getPeriod()))
-                exportOutputName = exportOutput + '/' +datetime.now().strftime('%Y%m%d_%H%M%S')
-                if counter_for_videos > 0:
-                    #logging.info('Saving video at frame {}, with shape {}'.format(frame_number,frame.shape))
-                    miCamara.generateVideo(exportOutputName)
-                    counter_for_videos -= 1
-                if counter_for_captures > 0:
-                    #logging.info('Saving images at frame {}, with shape {}'.format(frame_number,frame.shape))
-                    miCamara.exportHistorialAsImages(exportOutputName)
-                    counter_for_captures -= 1
-                time_now = time.time()
-
-            if autokill > 0:
-                if time.time() - initialTime > autokill:
-                    logging.info('Automatic program exit')
-                    break
-
-            ch = cv2.waitKey(1) & 0xFF
-            if ch == ord('q'):
+            ret, image = out_pipe.recv()
+            #_inputs_queue.appendleft(ret, image)
+            #print(image.shape)
+            print(ret, image)
+            if ret:
+                print('Displaying')
+                #cv2.imshow('Image',image)
+            else:
+                print('Not displaying')
+            if time.time() - initial_time > 100:
+                print('Did not receive any frame for 10 seconds, exiting')
                 break
-            if ch == ord('s'):
-                cv2.imwrite(exportOutput + '/' +datetime.now().strftime('%Y%m%d_%H%M%S')+'.png',frame)
+        print('Join')
+        miCamara.join()
+        print('Sleeping')
+        time.sleep(100)
+    else:
+        while True:
+            try:
+                ret, frame = miCamara.read() 
+
+                if not ret:
+                    logging.info('Ret False, could not get any frame at: {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
+
+                if args.show:
+                    cv2.imshow('Preview',frame)
+                else:
+                    server.sendImageIfAllowed(frame)
                 
-        except Exception as e:
-            logging.error('Exception at: {}. Leaving'.format(datetime.now().strftime('%Y%m%d_%H%M%S')), exc_info=True)
-            break
+                frame_number += 1
+
+                if (time.time() - time_now > args.period):
+                    logging.info('Last FPS: {0:.2f}, Last Period: {1:.3f}, Last Standar Deviation: {2:.5f}'.format(miCamara.getFPS(),miCamara.getPeriod(),miCamara.getStandarDeviation()/miCamara.getPeriod()))
+                    exportOutputName = exportOutput + '/' +datetime.now().strftime('%Y%m%d_%H%M%S')
+                    if counter_for_videos > 0:
+                        #logging.info('Saving video at frame {}, with shape {}'.format(frame_number,frame.shape))
+                        miCamara.generateVideo(exportOutputName)
+                        counter_for_videos -= 1
+                    if counter_for_captures > 0:
+                        #logging.info('Saving images at frame {}, with shape {}'.format(frame_number,frame.shape))
+                        miCamara.exportHistorialAsImages(exportOutputName)
+                        counter_for_captures -= 1
+                    time_now = time.time()
+
+                if autokill > 0:
+                    if time.time() - initialTime > autokill:
+                        logging.info('Automatic program exit')
+                        break
+
+                ch = cv2.waitKey(1) & 0xFF
+                if ch == ord('q'):
+                    break
+                if ch == ord('s'):
+                    cv2.imwrite(exportOutput + '/' +datetime.now().strftime('%Y%m%d_%H%M%S')+'.png',frame)
+                    
+            except Exception as e:
+                logging.error('Exception at: {}. Leaving'.format(datetime.now().strftime('%Y%m%d_%H%M%S')), exc_info=True)
+                break
