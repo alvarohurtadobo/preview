@@ -85,7 +85,7 @@ if __name__ == '__main__':
     if args.debug:
         my_level = logging.DEBUG
         logging.debug('Generando DEBUG')
-    logging.basicConfig(filename=os.getenv('TODAY_FOLDER')+'/preview.txt', filemode='w', format='%(name)s: %(levelname)s - %(asctime)s : %(message)s',level=my_level)
+    logging.basicConfig(filename='./preview.txt', filemode='w', format='%(name)s: %(levelname)s - %(asctime)s : %(message)s',level=my_level)
 
     # Self Kill settings
     autokill = 0
