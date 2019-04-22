@@ -1,5 +1,6 @@
 import cv2
 import argparse
+from tools.fps import FPS
 from threading import Thread
 from playstream import PlayStream
 
@@ -58,20 +59,34 @@ class ThreadStream:
         self.running = False
 
 if __name__ == "__main__":
-    print('Out: ',args.video_file)
+    # print('Out: ',args.video_file)
     myThreadedStream = ThreadStream(input = args.video_file,
                                     resolution = (args.width,args.height),
                                     historial_len = args.length,
                                     brightness = args.brightness,
                                     fake_gray_scale = args.grayscale,
                                     fps = args.fps).start()
+    fps = FPS().start()
+
+    if args.show:
+        cv2.namedWindow('Threaded frame', cv2.WINDOW_NORMAL)
+
+    old_frame_number = 0
 
     while True:
         ret, number, frame = myThreadedStream.read()
+        if number != old_frame_number:
+            fps.update()
+            old_frame_number = number
+            print('Updated')
         print(number)
-        cv2.namedWindow('Threaded frame',cv2.WINDOW_NORMAL)
-        cv2.imshow('Threaded frame', frame)
+        if args.show:
+            cv2.imshow('Threaded frame', frame)
         key = cv2.waitKey(1)
+        
         if key == ord('q'):
             myThreadedStream.stop()
             break
+    fps.stop()
+    print("Elasped time: {:.2f}".format(fps.elapsed()))
+    print("Approx.  FPS: {:.2f}".format(fps.fps()))
