@@ -1,5 +1,6 @@
 import cv2
 import argparse
+from time import time
 from tools.fps import FPS
 from threading import Thread
 from playstream import PlayStream
@@ -18,6 +19,9 @@ parser.add_argument("-l", "--length",       type = int,  default = 10,     help 
 args = parser.parse_args()
 
 class ThreadStream:
+    """
+    This class creates a thead to acquire images from preview class
+    """
     def __init__(self,  input = None,
                         resolution = None,
                         fake_gray_scale = False,
@@ -34,9 +38,18 @@ class ThreadStream:
                                     historial_len = historial_len,
                                     fps = fps)
         # The variable current_frame_number will be used to see if the current frame has changed
-        self.current_frame_number = 0
+        self._current_frame_number = 0
+        self._last_time = time()
+        self.last_capture_time = 0
         self.ret, self.frame = self.myCamera.read()
+        self.height, self.width, self.channels = self.frame.shape
+        self._low_resolution_ratio = 10
+        self._low_resolution = (int(self.width/self._low_resolution_ratio),int(self.height/self._low_resolution_ratio))
+        self.frame_low = cv2.resize(self.frame,self._low_resolution)
         self.running = False
+
+    def get_frame_info(self):
+        return self._current_frame_number, self.last_capture_time
 
     def start(self):
         # Override the start method
@@ -48,11 +61,19 @@ class ThreadStream:
         # We keep looping the read method
         while self.running:
             self.ret, self.frame = self.myCamera.read()
-            self.current_frame_number += 1
+            self.frame_low = cv2.resize(self.frame,self._low_resolution)
+            self._current_frame_number += 1
+            current_time = time()
+            self.last_capture_time = current_time - self._last_time
+            self._last_time = current_time
 
     def read(self):
         # Just pass the current values
-        return self.ret, self.current_frame_number, self.frame
+        return self.ret, self.frame
+
+    def read_low(self):
+        # Just pass the current values
+        return self.ret, self.frame_low
 
     def stop(self):
         # We end the update method
@@ -62,7 +83,7 @@ if __name__ == "__main__":
     # print('Out: ',args.video_file)
     myThreadedStream = ThreadStream(input = args.video_file,
                                     resolution = (args.width,args.height),
-                                    historial_len = args.length,
+                                    historial_len = args.length*args.fps,
                                     brightness = args.brightness,
                                     fake_gray_scale = args.grayscale,
                                     fps = args.fps).start()
@@ -74,16 +95,17 @@ if __name__ == "__main__":
     old_frame_number = 0
 
     while True:
-        ret, number, frame = myThreadedStream.read()
+        ret, frame = myThreadedStream.read_low()
+        number, capture_time = myThreadedStream.get_frame_info()
+        print('Last frame {0}, took {1:.2f} seg'.format(number,capture_time))
         if number != old_frame_number:
             fps.update()
             old_frame_number = number
             print('Updated')
-        print(number)
-        if args.show:
-            cv2.imshow('Threaded frame', frame)
+            if args.show:
+                cv2.imshow('Threaded frame', frame)
         key = cv2.waitKey(1)
-        
+
         if key == ord('q'):
             myThreadedStream.stop()
             break
