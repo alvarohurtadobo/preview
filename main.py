@@ -124,6 +124,7 @@ if __name__ == '__main__':
     while True:
         try:
             ret, frame = miCamara.read() 
+            #print(miCamara.get_frame_info())
 
             if not ret:
                 logging.info('Ret False, could not get any frame at: {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))

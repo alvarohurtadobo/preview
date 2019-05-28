@@ -40,7 +40,13 @@ class PlayStream():
         self.last_time = time.time()
         self.old_time = self.last_time
 
-        self.known_paths = [os.getenv('SOURCE_VIDEO_PATH')+'/']
+        self._current_frame_number = 0
+        self._last_time = time.time()
+        self.last_capture_time = 0
+
+        self.known_paths = []
+        if os.getenv('SOURCE_VIDEO_PATH'):
+            self.known_paths.append(os.getenv('SOURCE_VIDEO_PATH')+'/')
 
         if self.input_video:
             complete_file_path = self.verify_file_path(self.input_video)
@@ -69,6 +75,9 @@ class PlayStream():
 
         self.received_resolution = self.camera.received_resolution
         #print('Given resolution {}, received resolution {}'.format(self.resolution,self.received_resolution))
+
+    def get_frame_info(self):
+        return self._current_frame_number, self.last_capture_time
 
     def add_file_path(self,new_folder):
         self.known_paths.append(new_folder+'/')
@@ -118,6 +127,11 @@ class PlayStream():
         # We make use of the las 10 periods only
         if len(PlayStream.list_period)>30:
             PlayStream.list_period.pop(0)
+
+        self._current_frame_number += 1
+        current_time = time.time()
+        self.last_capture_time = current_time - self._last_time
+        self._last_time = current_time
 
         return ret, frame
 

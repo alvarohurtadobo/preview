@@ -61,11 +61,9 @@ class ThreadStream:
         # We keep looping the read method
         while self.running:
             self.ret, self.frame = self.myCamera.read()
+            self._current_frame_number, self.last_capture_time = self.myCamera.get_frame_info()
             self.frame_low = cv2.resize(self.frame,self._low_resolution)
-            self._current_frame_number += 1
-            current_time = time()
-            self.last_capture_time = current_time - self._last_time
-            self._last_time = current_time
+            
 
     def read(self):
         # Just pass the current values
