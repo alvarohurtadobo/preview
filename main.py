@@ -54,7 +54,7 @@ import logging
 import argparse
 from datetime import datetime
 
-sys.path.append(os.getenv('HOME')+'/trafficFlow/flaskwebcontroller/')
+sys.path.append(os.getenv('HOME')+'/projects/python/flaskwebcontroller/')
 from servercontroller import ServerController
 from playstream import PlayStream
 
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     if args.debug:
         my_level = logging.DEBUG
         logging.debug('Generando DEBUG')
-    logging.basicConfig(filename=os.getenv('TODAY_FOLDER')+'/preview.txt', filemode='w', format='%(name)s: %(levelname)s - %(asctime)s : %(message)s',level=my_level)
+    logging.basicConfig(filename='./preview.txt', filemode='w', format='%(name)s: %(levelname)s - %(asctime)s : %(message)s',level=my_level)
 
     # Self Kill settings
     autokill = 0
@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     initialTime = time.time()
 
-    exportOutput = os.getenv('HOME')+'/output'
+    exportOutput = os.getenv('HOME')+'/projects/python/preview-output'
 
     if not os.path.exists(exportOutput):
         os.makedirs(exportOutput)
@@ -124,6 +124,7 @@ if __name__ == '__main__':
     while True:
         try:
             ret, frame = miCamara.read() 
+            #print(miCamara.get_frame_info())
 
             if not ret:
                 logging.info('Ret False, could not get any frame at: {}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))

@@ -8,11 +8,12 @@ import logging
 class HighPiCamera():
     """
     This class uses the standar Picamera class and emulates the standar opencv read method with no problem at hight resolutions
+    Currently because of hardware limitations only 5Mp resolution is opssible
     """
     high_source = os.getenv('SOURCE_FOLDER_PATH')
 
     def __init__(   self,
-                    width = 0,
+                    width = 2560,
                     height = 1920,
                     framerate = 2,
                     emulate = None):
