@@ -54,7 +54,7 @@ import logging
 import argparse
 from datetime import datetime
 
-sys.path.append(os.getenv('HOME')+'/projects/python/flaskwebcontroller/')
+sys.path.append(os.getenv('HOME')+'/trafficFlow/flaskwebcontroller/')
 from servercontroller import ServerController
 from playstream import PlayStream
 
@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     initialTime = time.time()
 
-    exportOutput = os.getenv('HOME')+'/projects/python/preview-output'
+    exportOutput = os.getenv('HOME')+'/trafficFlow/preview/preview-output'
 
     if not os.path.exists(exportOutput):
         os.makedirs(exportOutput)

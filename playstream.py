@@ -117,7 +117,9 @@ class PlayStream():
             if len(PlayStream.historial) > self.historial_len:
                 del PlayStream.historial[min(PlayStream.historial)]
         if not ret:
+            print("No frame received")
             raise Exception('Could no longer get any frame')
+            #print("No frame received")
         
         # We calculate the fps:
         self.new_time_for_fps = time.time()
